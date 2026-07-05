@@ -1,0 +1,14 @@
+{
+  "name": "tacc-hpc-plugin",
+  "owner": {
+    "name": "Junebeom Kwon",
+    "email": "kjb961013@snu.ac.kr"
+  },
+  "plugins": [
+    {
+      "name": "tacc-hpc",
+      "source": "./",
+      "description": "Helper for using TACC supercomputers — system selection, login (SSH+MFA), environment setup (Lmod, conda, Apptainer), and Slurm job submission for reproducible neuroimaging/AI research."
+    }
+  ]
+}

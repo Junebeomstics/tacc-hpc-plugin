@@ -1,0 +1,24 @@
+{
+  "name": "tacc-hpc",
+  "version": "0.1.0",
+  "description": "Helper for using TACC (Texas Advanced Computing Center) supercomputers — system selection, login (SSH+MFA), environment setup (Lmod, conda, Apptainer/Singularity), and Slurm job submission. Tuned for reproducible neuroimaging / AI research workflows.",
+  "author": {
+    "name": "Junebeom Kwon",
+    "email": "kjb961013@snu.ac.kr"
+  },
+  "homepage": "https://github.com/Junebeomstics/tacc-hpc-plugin",
+  "keywords": [
+    "tacc",
+    "hpc",
+    "supercomputer",
+    "slurm",
+    "apptainer",
+    "singularity",
+    "neuroimaging",
+    "frontera",
+    "vista",
+    "lonestar6",
+    "stampede3"
+  ],
+  "license": "MIT"
+}
