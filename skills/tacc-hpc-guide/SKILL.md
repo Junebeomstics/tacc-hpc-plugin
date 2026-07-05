@@ -4,8 +4,9 @@ description: >-
   Guide for working on TACC (Texas Advanced Computing Center) supercomputers.
   Use when the user asks how to choose a TACC system, log in, request an
   allocation, set up a Python/conda environment, run Apptainer/Singularity
-  containers, or submit Slurm jobs on Frontera, Vista, Stampede3, Lonestar6,
-  or Jetstream2. Also triggers on "TACC", "슈퍼컴퓨터", "supercomputer allocation",
+  containers, choose the right Slurm queue for an experiment, or submit Slurm
+  jobs on Frontera, Vista, Stampede3, Lonestar6, or Jetstream2. Also triggers on
+  "TACC", "슈퍼컴퓨터", "supercomputer allocation", "which queue", "queue recommendation",
   "idev", "sbatch", "module load", "$SCRATCH", and reproducible-neuroscience /
   brainlife.io HPC questions.
 ---
@@ -137,7 +138,72 @@ scancel <jobid>           # cancel
 Remote viz: `sbatch /share/doc/slurm/job.vnc` (or `job.dcv`).
 Parallelize many serial tasks: `module load pylauncher`.
 
-## 9. Common pitfalls
+## 9. Portability — what carries across systems vs. what must change
+
+The command **interface** is TACC-wide; the **values** are per-system. When generating
+a script, always fill the per-system fields and check the two hard breakpoints below.
+
+**Portable as-is (TACC conventions, same everywhere):**
+`ssh user@host` + MFA · `$HOME`/`$WORK`/`$SCRATCH` (note: `$WORK`/Stockyard is shared
+across systems) · Lmod (`module load/spider/avail/purge`) · `idev`/`sbatch`/`squeue`/`scancel`
+· `module load tacc-apptainer` · the conda/venv-on-`$SCRATCH` pattern.
+
+**Must be set per system:**
+
+| Field | Frontera | Stampede3 | Lonestar6 | Vista |
+|-------|----------|-----------|-----------|-------|
+| SSH host | `frontera` | `stampede3` | `ls6` | `vista` |
+| CPU arch | x86 (Intel) | x86 (Intel) | x86 (AMD) | **Arm aarch64** |
+| GPU / toolchain | NVIDIA RTX / CUDA | **Intel Max (PVC) / oneAPI** | NVIDIA A100 / CUDA | NVIDIA H100 / CUDA |
+| Example queue `-p` | `normal`, `rtx` | `skx`, `icx`, `pvc` | `normal`, `gpu-a100` | `gh`, `gg` |
+| `-A <allocation>` | project-specific | project-specific | project-specific | project-specific |
+
+**Two hard breakpoints — an x86+NVIDIA script does NOT transfer:**
+1. **Vista is Arm (aarch64).** x86 pip wheels, conda packages, and `.sif` container images
+   won't run. Use aarch64 builds or NVIDIA NGC/ARM containers.
+2. **Stampede3 GPU vendor depends on the queue.** `pvc` = Intel Max (oneAPI/SYCL; CUDA and
+   `apptainer --nv` do NOT apply); `h100` = NVIDIA (CUDA/`--nv` apply). (Lonestar6, Vista,
+   Frontera are all CUDA.)
+
+Rule of thumb: **x86 + NVIDIA systems (Frontera ↔ Lonestar6)** reuse environments and
+containers well; crossing into **Vista (Arm)** or **Stampede3 GPU (Intel)** requires
+rebuilding the environment.
+
+**Outside TACC:** `idev`, `tacc-apptainer`, `$SCRATCH` setup, and MFA are TACC-specific.
+Generic Slurm (`sbatch`/`squeue`), Lmod, and container concepts port to most HPC clusters;
+the specifics do not.
+
+## 10. Queue rules & recommendation (as of 2026-07-05)
+
+> Queues, limits, and charge rates **change without notice** — run `qlimits` on the target
+> system for live values. Below is the 2026-07-05 snapshot from TACC docs. Billing unit:
+> 1 SU = one node-hour; **15-min (0.25h) minimum charge**; no node sharing (whole node billed).
+
+**Lonestar6** — `development`(8N/2h/1SU), `normal`(64N/48h/1SU), `large`(256N/1SU),
+`gpu-a100`(8N/3SU), `gpu-a100-dev`(2N/2h/3SU), `gpu-a100-small`(1N/1.5SU), `gpu-h100`(1N/6SU), `vm-small`(0.143SU).
+**Frontera** — `development`(40N/2h/1SU), `normal`(3–512N/1SU), `large`(2048N/1SU),
+`flex`(128N/**0.8SU**, pre-emptible), `rtx`(16N GPU/3SU), `rtx-dev`(2N/2h/3SU), `nvdimm`(4N/2SU).
+**Stampede3** — CPU: `skx`(256N/1SU), `skx-dev`(16N/2h/1SU), `icx`(32N/1.5SU), `spr`(HBM/2SU), `nvdimm`(4SU);
+GPU: `pvc`(**Intel** Max/3SU), `h100`(**NVIDIA**/4SU).
+**Vista** (Arm) — `gg`(Grace-Grace CPU/32N/0.33SU), `gh`(Grace-Hopper H100/64N/**1SU**), `gh-dev`(8N/2h/1SU).
+
+**Recommend a queue by the user's experiment purpose:**
+
+| Purpose | Recommend | Why |
+|---------|-----------|-----|
+| Quick debug / interactive test | any `*-dev` queue (`development`, `skx-dev`, `gpu-a100-dev`, `rtx-dev`, `gh-dev`) + `idev` | 2h cap, short wait |
+| Single-GPU DL train/infer (small) | LS6 `gpu-a100-small` (1.5 SU, cheapest 1-GPU) or `gpu-a100` | cost-efficient |
+| Large multi-GPU DL / foundation model | **Vista `gh`** (up to 64 GPUs, 1 SU) > Stampede3 `h100` > LS6 `gpu-a100` | GPU density, best $/GPU on Vista |
+| Large CPU parallel (tractography sweep, batch preprocessing) | Stampede3 `skx`/`icx`, Frontera `normal`/`large`, LS6 `normal`/`large` | hundreds of CPU nodes |
+| Many small jobs / cost-saving | Frontera `flex` (0.8 SU, pre-emptible) + `pylauncher` | lowest charge |
+| High-memory (large volumes/graphs) | Frontera `nvdimm`, Stampede3 `nvdimm`/`spr`(HBM) | high mem/node |
+| Intel GPU / oneAPI experiments | Stampede3 `pvc` | SYCL, not CUDA |
+
+Cost order (per node-hour): `gpu-h100`(6) > S3 `h100`(4) > `gpu-a100`/`pvc`(3) > `nvdimm`(2) >
+Vista `gh`(1)/CPU `normal`(1) > `flex`(0.8) > Vista `gg`(0.33). **Vista `gh` runs H100 at 1 SU —
+best value for large DL (needs Arm builds).** Always confirm the user's `-A` allocation covers the system.
+
+## 11. Common pitfalls
 
 - Running compute on login nodes → account suspension.
 - Putting envs on `$HOME` → quota errors mid-job.

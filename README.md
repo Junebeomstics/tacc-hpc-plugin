@@ -13,7 +13,7 @@ tractography, deep-learning benchmarks).
 | `skills/tacc-hpc-guide` | Auto-triggered knowledge skill: system selection table, login (SSH+MFA), filesystems, Lmod, conda, Apptainer, Slurm, pitfalls |
 | `/tacc-login` | Walk through SSH + MFA login and allocation prerequisites |
 | `/tacc-env` | Set up a `$SCRATCH` venv/conda or Apptainer container environment |
-| `/tacc-slurm` | Generate an `idev` command or a complete `sbatch` batch script |
+| `/tacc-slurm` | Generate an `idev` command or a complete `sbatch` batch script, and recommend the right queue for your experiment |
 
 ## Systems covered
 
@@ -38,6 +38,7 @@ Just ask naturally — the skill auto-activates on TACC topics:
 - "How do I log into Lonestar6?"
 - "Set up a PyTorch conda env on Stampede3"
 - "Write an sbatch script for a 4-hour A100 job on Lonestar6"
+- "Which queue should I use for large multi-GPU foundation-model training?"
 
 Or use the slash commands: `/tacc-login ls6`, `/tacc-env vista pytorch`, `/tacc-slurm`.
 
