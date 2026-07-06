@@ -1,6 +1,6 @@
 {
   "name": "tacc-hpc",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Helper for using TACC (Texas Advanced Computing Center) supercomputers — system selection, login (SSH+MFA), environment setup (Lmod, conda, Apptainer/Singularity), and Slurm job submission. Tuned for reproducible neuroimaging / AI research workflows.",
   "author": {
     "name": "Junebeom Kwon",

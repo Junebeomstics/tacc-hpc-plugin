@@ -11,6 +11,7 @@ tractography, deep-learning benchmarks).
 | Component | Purpose |
 |-----------|---------|
 | `skills/tacc-hpc-guide` | Auto-triggered knowledge skill: system selection table, login (SSH+MFA), filesystems, Lmod, conda, Apptainer, Slurm, pitfalls |
+| `skills/tacc-claude-code-setup` | Auto-triggered knowledge skill: install & run Claude Code on a TACC login node (Node.js via nvm, npm prefix fix, allow-scripts caveat, SSH auth) |
 | `/tacc-login` | Walk through SSH + MFA login and allocation prerequisites |
 | `/tacc-env` | Set up a `$SCRATCH` venv/conda or Apptainer container environment |
 | `/tacc-slurm` | Generate an `idev` command or a complete `sbatch` batch script, and recommend the right queue for your experiment |
